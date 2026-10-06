@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><testsuite errors="1" failures="0" name="Compra como invitado en OpenCart" skipped="0" tests="1" time="15.51" timestamp="2026-10-06 10:26:40"><testcase name="Comprar dos productos y confirmar el pedido como invitado"><error message="Expected condition failed: waiting for element to be clickable: By.id: button-cart (tried for 15 second(s) with 500 milliseconds interval)&#10;Build info: version: '4.32.0', revision: 'd17c8aa950'&#10;System info: os.name: 'Mac OS X', os.arch: 'aarch64', os.version: '26.4', java.version: '17.0.20.1'&#10;Driver info: net.thucydides.core.webdriver.DevToolsWebDriverFacade" type="org.openqa.selenium.TimeoutException">Expected condition failed: waiting for element to be clickable: By.id: button-cart (tried for 15 second(s) with 500 milliseconds interval)
+Build info: version: '4.32.0', revision: 'd17c8aa950'
+System info: os.name: 'Mac OS X', os.arch: 'aarch64', os.version: '26.4', java.version: '17.0.20.1'
+Driver info: net.thucydides.core.webdriver.DevToolsWebDriverFacade</error><system-err>Expected condition failed: waiting for element to be clickable: By.id: button-cart (tried for 15 second(s) with 500 milliseconds interval)
+Build info: version: '4.32.0', revision: 'd17c8aa950'
+System info: os.name: 'Mac OS X', os.arch: 'aarch64', os.version: '26.4', java.version: '17.0.20.1'
+Driver info: net.thucydides.core.webdriver.DevToolsWebDriverFacade
+com.marioarrieta.qa.opencart.pages.ProductPage.addToCart(ProductPage.java:30)
+com.marioarrieta.qa.opencart.stepdefinitions.CompraStepDefinitions.agrega_el_producto_al_carrito(CompraStepDefinitions.java:46)
+</system-err></testcase></testsuite>

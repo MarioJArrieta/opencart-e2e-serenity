@@ -1,0 +1,96 @@
+CONCLUSIONES Y HALLAZGOS - EJERCICIO 1 (OpenCart E2E)
+========================================================
+
+1. METODOLOGIA
+----------------
+Antes de escribir una sola linea de automatizacion, se exploro el flujo
+real de compra contra el sitio (http://opencart.abstracta.us/) con
+peticiones HTTP directas (manteniendo sesion via cookies) para mapear:
+  - IDs de producto reales en el catalogo demo (MacBook=43, iPhone=40)
+  - El checkout de OpenCart es un wizard de un solo acordeon (#accordion)
+    cuyos 6 pasos se cargan por AJAX dentro del MISMO documento -- no hay
+    navegacion de pagina entre "Checkout Options", "Billing Details",
+    "Delivery Details", "Delivery Method", "Payment Method" y
+    "Confirm Order".
+  - Los IDs/selectores exactos de cada boton y campo de formulario de
+    cada paso (button-account, input-payment-*, button-guest,
+    button-shipping-method, button-payment-method, button-confirm).
+Esto evito adivinar selectores y reescribir el test a prueba y error.
+
+
+2. HALLAZGOS DEL SITIO (no son bugs del test, son del ambiente demo)
+------------------------------------------------------------------------
+
+a) Insignia fija de Bitnami intercepta clicks
+   El sitio corre sobre un stack Bitnami, que inyecta una imagen fija
+   ("bitnami-corner-image") en una esquina de la pantalla. Segun el alto
+   de cada paso del acordeon de checkout, esa insignia puede terminar
+   superpuesta sobre el boton que se quiere clickear, lo que Selenium
+   reporta como ElementClickInterceptedException (el click "real" de un
+   usuario tambien fallaria ahi, no es un falso positivo del test).
+   Solucion aplicada: click via JavaScript (arguments[0].click()) en
+   vez de WebElement.click() para los botones del wizard de checkout,
+   ya que el click via JS no depende de que el elemento este
+   visualmente libre de obstrucciones en ese punto de la pantalla.
+
+b) El <h1> del logo del header colisiona con el <h1> de contenido
+   El theme por defecto de OpenCart usa un <h1> para el nombre de la
+   tienda ("Your Store") en el header, que aparece ANTES en el DOM que
+   el <h1> de contenido de cada pagina. Un selector generico
+   By.tagName("h1") agarra el del header, no el mensaje real de la
+   pagina. Se acoto el selector a "#content h1".
+
+c) Condicion de carrera al confirmar el pedido
+   El boton "Confirm Order" dispara un POST AJAX (checkout/confirm/save)
+   que, si tiene exito, redirige por JavaScript a la pagina de exito
+   (checkout/success). Leer el <h1> inmediatamente despues del click
+   puede capturar todavia el <h1> de la pantalla de Checkout (antes de
+   que la redireccion ocurra). Se agrego una espera explicita a que la
+   URL contenga "route=checkout/success" antes de leer el titulo de
+   confirmacion.
+
+d) La tabla de items del carrito no es la unica tabla de la pagina
+   La pantalla de carrito (checkout/cart) tiene varias tablas HTML
+   (items, subtotal/total, y ademas una mini-vista del carrito en el
+   dropdown del header). Un selector generico de filas de tabla cuenta
+   filas de las tres. Se acoto el selector a la tabla dentro del
+   formulario de edicion del carrito (form[action*='cart/edit']).
+
+e) Latencia variable del servidor demo publico
+   Al ser un servidor demo publico y compartido, los tiempos de
+   respuesta de cada paso AJAX del checkout variaron notablemente entre
+   corridas (de unos pocos segundos a mas de 10 segundos en el paso de
+   confirmacion). Se fijaron esperas explicitas (WebDriverWait de hasta
+   25 segundos) en vez de esperas fijas (Thread.sleep), para que el
+   test espere solo lo necesario en cada corrida sin ser fragil ante
+   esta variabilidad.
+
+
+3. DECISIONES DE DISENO
+-------------------------
+- Page Object clasico (un objeto por pantalla: HomePage, ProductPage,
+  CartPage, CheckoutPage, ConfirmationPage), sin Screenplay Pattern, por
+  simplicidad dado el alcance del ejercicio.
+- El feature file esta en español (incluyendo el "# language: es" que
+  exige el parser de Gherkin de Cucumber para reconocer palabras clave
+  como "Característica"/"Escenario"/"Dado"/"Cuando"/"Entonces"/"Y").
+- Chrome headless por defecto (mas rapido y reproducible en cualquier
+  maquina/CI); se documenta en readme.txt como desactivarlo si se
+  quiere ver la ejecucion en vivo.
+- Se evito depender de @DefaultUrl + open() de Serenity para navegar:
+  en la version de Serenity usada (4.2.30), las Page Objects inyectadas
+  con @Steps quedan envueltas en un proxy dinamico que en este entorno
+  no resolvio correctamente la anotacion @DefaultUrl al llamar a
+  open() sin parametros (la navegacion fallaba en silencio, sin
+  lanzar excepcion, dejando el navegador sin ninguna pestaña abierta).
+  Se opto por getDriver().get(URL) explicito, que es la forma mas
+  directa y no depende de esa resolucion de anotaciones.
+
+
+4. RESULTADO
+-------------
+El escenario completo (agregar 2 productos, ver carrito, checkout como
+invitado, llenar datos de facturacion, elegir metodo de envio y pago,
+confirmar) corre de principio a fin y verifica el mensaje final
+"Your order has been placed!". Reporte HTML de Serenity incluido en la
+carpeta reporte/ de este repositorio.
