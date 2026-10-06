@@ -61,8 +61,14 @@ public class CheckoutPage extends PageObject {
         getDriver().findElement(By.id("input-payment-city")).sendKeys(city);
         getDriver().findElement(By.id("input-payment-postcode")).sendKeys(postcode);
 
-        Select country = new Select(getDriver().findElement(By.id("input-payment-country")));
-        country.selectByVisibleText("United States");
+        // El <select> de país arranca deshabilitado mientras OpenCart puebla sus
+        // opciones por AJAX al cargar este paso; seleccionar antes de que se
+        // habilite lanza UnsupportedOperationException ("disabled select").
+        WebElement countryElement = webDriverWait().until(
+            ExpectedConditions.elementToBeClickable(By.id("input-payment-country"))
+        );
+        webDriverWait().until(driver -> new Select(countryElement).getOptions().size() > 1);
+        new Select(countryElement).selectByVisibleText("United States");
 
         // La lista de "Region / State" se recarga por AJAX según el país elegido.
         WebElement zoneSelect = webDriverWait().until(

@@ -65,6 +65,21 @@ e) Latencia variable del servidor demo publico
    test espere solo lo necesario en cada corrida sin ser fragil ante
    esta variabilidad.
 
+f) El <select> de pais arranca deshabilitado
+   El campo "Country" del formulario de facturacion se puebla por AJAX
+   al cargar el paso de "Billing Details"; mientras esa llamada esta en
+   curso, el <select> permanece deshabilitado. Seleccionar una opcion en
+   ese momento lanza UnsupportedOperationException ("You may not select
+   an option in disabled select") en vez de un timeout, por lo que no lo
+   cubria la espera que ya existia sobre el campo de nombre. Reproducido
+   al ejecutar el proyecto en una maquina distinta a la usada durante el
+   desarrollo inicial (misma logica de fondo que el hallazgo (e): a mayor
+   latencia de red hacia el sitio demo, mayor ventana en la que el
+   select queda deshabilitado). Solucion aplicada: esperar explicitamente
+   a que el elemento sea "clickable" (visible + habilitado) y a que ya
+   tenga mas de una opcion cargada antes de seleccionar, igual que ya se
+   hacia con el select de "Region/State" inmediatamente despues.
+
 
 3. DECISIONES DE DISENO
 -------------------------
